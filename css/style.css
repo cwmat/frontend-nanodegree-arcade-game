@@ -1,3 +1,26 @@
+* {
+  font-family: Bangers;
+}
+
 body {
     text-align: center;
+    background-image: url("../images/frog.png");
+    background-size: auto;
+}
+
+header {
+  background: white;
+  opacity: 0.80;
+  padding: 0.5em;
+  margin-top: 0.5em;
+}
+
+#score, 
+#failure {
+  background: white;
+  opacity: 0.80;
+  padding: 0.5em;
+  margin-top: 0.5em;
+  max-width: 30em;
+  margin: 1em auto;
 }
