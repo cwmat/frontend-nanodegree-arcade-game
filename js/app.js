@@ -1,15 +1,28 @@
-// Global "magic numbers"
-var xMod = 101,
-    yMod = 85.5 ,
-    endOfColumns = 5 * xMod,
-    beforeColumns = -1 * xMod,
-    beyondBottomRow = 5 * yMod,
-    topRow = -yMod,
-    topRowYCoord = -38.33299999999997,
-    maxSpeed = 500,
-    minSpeed = 100;
+/*
+app.js
+frontend-nanodegree-arcade-game
+(Frogger)
+Written by Chaz Mateer and Udacity
+
+This program attempts to recreate the arcade game Frogger.  The object of the game is to get your character across the street and to the river on the other side without running into the bugs.  Upon reaching the river the game will reset and you can try again.  Hit a bug and the game will also be reset though this event will count points against you while making it to the river gains points.  
+*/
+
+"use strict";
+// Constants
+var X_MOD = 101,
+    Y_MOD = 83,
+    END_OF_COLUMNS = 5 * X_MOD,
+    BEFORE_COLUMNS = -1 * X_MOD,
+    BEYOND_BOTTOM_ROW = 5 * Y_MOD,
+    TOP_ROW = -Y_MOD,
+    TOP_ROW_Y_COORD = Y_MOD / 2,
+    MAX_SPEED = 500,
+    MIN_SPEED = 100;
 
 // Enemies our player must avoid
+// Parameter: x, x coordinate of the enemy
+// Parameter: y, y coordinate of the enemy
+// Parameter: speed, the speed at which the enemy will move
 var Enemy = function(x, y, speed) {
     // Variables applied to each of our instances go here,
     // we've provided one for you to get started
@@ -18,7 +31,7 @@ var Enemy = function(x, y, speed) {
     // a helper we've provided to easily load images
 
     this.sprite = 'images/enemy-bug.png';
-    this.x = x * xMod;
+    this.x = x * X_MOD;
     this.y = 82.5 * y - 23.333;
     this.speed = speed;
 }
@@ -31,9 +44,9 @@ Enemy.prototype.update = function(dt) {
     // all computers.
     this.x = this.x + this.speed * dt;
 
-    if (this.x >= endOfColumns) {
+    if (this.x >= END_OF_COLUMNS) {
         setRandomSpeed(this);
-        this.x = beforeColumns;
+        this.x = BEFORE_COLUMNS;
     }
 
     // TODO add collision detection
@@ -48,6 +61,7 @@ Enemy.prototype.render = function() {
 // This class requires an update(), render() and
 // a handleInput() method.
 var Player = function() {
+    // Represents the main player character for the game
     this.sprite = 'images/char-boy.png';
     // Set x and y with a call to resetPlayer()
     this.resetPosition();
@@ -55,63 +69,104 @@ var Player = function() {
     this.failure = 0;
 }
 
+// Update the player's position, required method for game
+// Parameter: dt, a time delta between ticks
 Player.prototype.update = function(dt) {
-    checkCollision(this, allEnemies);
+    this.checkCollision(allEnemies);
 }
 
+// Draw the player on the screen, required method for game
 Player.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 }
 
+// Handler method for keyup events (affects only arrow keys)
+// Allows the PC to move.  
 Player.prototype.handleInput = function(input) {
     var tempMove;
     switch (input) {
         case 'left':
-            tempMove = this.x - xMod
-            if (tempMove > beforeColumns) {
+            tempMove = this.x - X_MOD
+            if (tempMove > BEFORE_COLUMNS) {
                 this.x = tempMove;
             }
             break;
         case 'up':
-            tempMove = this.y - yMod
-            if (tempMove > topRow) {
+            tempMove = this.y - Y_MOD
+            if (tempMove > TOP_ROW) {
                 this.y = tempMove;
             }
-            if (this.y <= topRowYCoord) {
+            if (this.y <= TOP_ROW_Y_COORD) {
                 this.score++;
                 printScore(this);
                 this.resetPosition();
             }
             break;
         case 'right':
-            tempMove = this.x + xMod
-            if (tempMove < endOfColumns) {
+            tempMove = this.x + X_MOD
+            if (tempMove < END_OF_COLUMNS) {
                 this.x = tempMove;
             }
             break;
         case 'down':
-            tempMove = this.y + yMod;
-            if (tempMove < beyondBottomRow) {
+            tempMove = this.y + Y_MOD;
+            if (tempMove < BEYOND_BOTTOM_ROW) {
                 this.y = tempMove;
             }
             break;
     }
 }
 
+// Resets the PC to the starting location
+// Used on init, when the PC hits an enemy, and when the PC
+// makes it to the river.
 Player.prototype.resetPosition = function() {
-    this.x = 2 * xMod;
+    this.x = 2 * X_MOD;
     this.y = 82.5 * 5 - 23.333;
 }
 
-// Randomize enemy inputs and push to enemy array
-var getRandomSpeed = function() {
-    return Math.floor(Math.random() * (maxSpeed - minSpeed + 1)) + minSpeed
+// Collision detection algorithm
+// Determines if the PC has run into an enemy or has made it
+// to the river.
+Player.prototype.checkCollision = function(enemyArray) {
+    var playerX,
+        playerY,
+        tempEnemyX,
+        tempEnemyY,
+        bugSizeX,
+        bugSizeY,
+        easY_MOD = 40,
+        self = this;
+
+    playerX = this.x;
+    playerY = this.y;
+
+    enemyArray.forEach(function(enemy) {
+        tempEnemyX = enemy.x -20;
+        bugSizeX = tempEnemyX + X_MOD;
+        tempEnemyY = enemy.y;
+        bugSizeY = tempEnemyY - Y_MOD;
+
+        if (playerX >= tempEnemyX && playerX <= bugSizeX && playerY <= tempEnemyY && playerY >= bugSizeY) {
+            self.failure++;
+            printFailure(self);
+            self.resetPosition();
+        }
+    });
 }
 
+// Randomize enemy inputs and push to enemy array.
+var getRandomSpeed = function() {
+    return Math.floor(Math.random() * (MAX_SPEED - MIN_SPEED + 1)) + MIN_SPEED
+}
+
+// Used to create a random speed for enemies after 
+// they pass the final column.
 var setRandomSpeed = function(enemy) {
     enemy.speed = getRandomSpeed();
 }
 
+// Randomizes enemy placement and speed.
 var randomizeEnemy = function(allEnemies) {
     for (var row = 1; row <= 3; row ++) {
         for (var bug = 1; bug <= 1; bug++) {
@@ -121,38 +176,13 @@ var randomizeEnemy = function(allEnemies) {
     }
 }
 
-// Check Collision
-var checkCollision = function(player, enemyArray) {
-    var playerX,
-        playerY,
-        tempEnemyX,
-        tempEnemyY,
-        easyMod = 40;
-
-    playerX = player.x;
-    playerY = player.y;
-
-    enemyArray.forEach(function(enemy) {
-        tempEnemyX = enemy.x -20;
-        bugSizeX = tempEnemyX + xMod;
-        tempEnemyY = enemy.y;
-        bugSizeY = tempEnemyY - yMod;
-
-        if (playerX >= tempEnemyX && playerX <= bugSizeX && playerY <= tempEnemyY && playerY >= bugSizeY) {
-            player.failure++;
-            printFailure(player);
-            player.resetPosition();
-        }
-    });
-}
-
-// Print score
+// Print score to index.html
 var printScore = function(player) {
     var formattedScore = "<p>You have made it to the river: " + player.score + " times!</p>";
     $('#score').find('p').replaceWith(formattedScore);
 }
 
-// Print failures
+// Print failures to index.html
 var printFailure = function(player) {
     var formattedFails = "<p>You have been hit: " + player.failure + " times :[</p>";
     $('#failure').find('p').replaceWith(formattedFails);
@@ -179,3 +209,10 @@ document.addEventListener('keyup', function(e) {
 
     player.handleInput(allowedKeys[e.keyCode]);
 });
+
+// Prevent arrow key scrolling
+document.addEventListener("keydown", function (e) {
+  if([37,38,39,40].indexOf(e.keyCode) > -1){
+    e.preventDefault();
+  }
+}, false);

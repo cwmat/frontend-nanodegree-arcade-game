@@ -4,7 +4,7 @@
 
 body {
     text-align: center;
-    background-image: url("../images/frog.png");
+    background-image: url(../images/frog.png);
     background-size: auto;
 }
 
